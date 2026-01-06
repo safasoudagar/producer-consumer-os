@@ -10,33 +10,14 @@
   <h1 class="title">OS Process Synchronization Visualizer</h1>
   <p class="subtitle">Select a problem to visualize</p>
 
-  <!-- HOME SCREEN -->
-  <div id="home-screen">
-    <div class="card-container">
-      <div class="card" onclick="openSimulation('producerConsumer')">
-        <h2>Producers–Consumers</h2>
-        <p class="card-text">Circular bounded buffer with M producers and N consumers.</p>
-      </div>
-
-      <div class="card" onclick="openSimulation('readersWriters')">
-        <h2>Readers–Writers</h2>
-        <p class="card-text">Shared data with concurrent readers and writers.</p>
-      </div>
-
-      <div class="card" onclick="openSimulation('diningPhilosophers')">
-        <h2>Dining Philosophers</h2>
-        <p class="card-text">Philosophers competing for forks around a table.</p>
-      </div>
-
-      <div class="card" onclick="openSimulation('deadlock')">
-        <h2>Deadlock Simulation</h2>
-        <p class="card-text">Processes and resources with circular wait.</p>
-      </div>
-    </div>
+  <!-- HOME SCREEN (removed) -->
+  <!-- Kept the element to avoid JS errors, but hidden so the simulation is shown directly -->
+  <div id="home-screen" style="display:none;">
+    <!-- Home content removed to open simulation directly -->
   </div>
 
   <!-- PRODUCER–CONSUMER SIM SCREEN -->
-  <div id="simulation-screen" style="display:none;">
+  <div id="simulation-screen" style="display:block;">
     <button id="back-btn" onclick="goBackHome()">← Back</button>
     <h2 id="sim-title">Producers–Consumers Visualization</h2>
 
@@ -185,6 +166,18 @@
   </div>
 
   <script src="app.js"></script>
+
+  <!-- Open the Producers–Consumers simulation immediately when the page loads -->
+  <script>
+    // Ensure simulation opens after app.js initialized handlers
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        openSimulation('producerConsumer');
+      } catch (e) {
+        console.error('Failed to auto-open simulation:', e);
+      }
+    });
+  </script>
 
 </body>
 </html>
