@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OS Visualization App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1 class="title">OS Process Synchronization Visualizer</h1>
+  <p class="subtitle">Select a problem to visualize</p>
+
+  <!-- HOME SCREEN -->
+  <div id="home-screen">
+    <div class="card-container">
+      <div class="card" onclick="openSimulation('producerConsumer')">
+        <h2>Producers–Consumers</h2>
+        <p class="card-text">Circular bounded buffer with M producers and N consumers.</p>
+      </div>
+
+      <div class="card" onclick="openSimulation('readersWriters')">
+        <h2>Readers–Writers</h2>
+        <p class="card-text">Shared data with concurrent readers and writers.</p>
+      </div>
+
+      <div class="card" onclick="openSimulation('diningPhilosophers')">
+        <h2>Dining Philosophers</h2>
+        <p class="card-text">Philosophers competing for forks around a table.</p>
+      </div>
+
+      <div class="card" onclick="openSimulation('deadlock')">
+        <h2>Deadlock Simulation</h2>
+        <p class="card-text">Processes and resources with circular wait.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCER–CONSUMER SIM SCREEN -->
+  <div id="simulation-screen" style="display:none;">
+    <button id="back-btn" onclick="goBackHome()">← Back</button>
+    <h2 id="sim-title">Producers–Consumers Visualization</h2>
+
+    <!-- THREE-COLUMN LAYOUT: PARAMETERS (LEFT) | SIMULATION (CENTER) | PSEUDOCODE (RIGHT) -->
+    <div class="threecol">
+
+      <!-- LEFT COLUMN: Parameters / Legend ONLY -->
+      <aside class="left-column">
+        <div class="panel controls">
+          <h3>Simulation Controls</h3>
+
+          <label for="sync-mode">Synchronization Mode</label>
+          <select id="sync-mode">
+            <option value="sync">With Synchronization (monitor-like, safe)</option>
+            <option value="nosync">Without Synchronization (race conditions)</option>
+          </select>
+
+          <label for="transfer-speed">Transfer Speed (multiplier)</label>
+          <input id="transfer-speed" type="number" min="0.1" max="6" step="0.1" value="1.0">
+
+          <label for="num-producers">Number of Producers (M)</label>
+          <input id="num-producers" type="number" min="1" max="10" value="5">
+
+          <label for="num-consumers">Number of Consumers (N)</label>
+          <input id="num-consumers" type="number" min="1" max="10" value="5">
+
+          <label for="buffer-capacity">Buffer Capacity (slots)</label>
+          <input id="buffer-capacity" type="number" min="1" max="12" value="8">
+
+          <label for="producer-delay">Producer Speed (ms)</label>
+          <input id="producer-delay" type="number" min="100" step="100" value="800">
+
+          <label for="consumer-delay">Consumer Speed (ms)</label>
+          <input id="consumer-delay" type="number" min="100" step="100" value="1000">
+
+          <div class="button-row buttons">
+            <button onclick="startProducerConsumer()">Start</button>
+            <button onclick="pauseProducerConsumer()">Pause</button>
+            <button onclick="resumeProducerConsumer()">Resume</button>
+            <button onclick="resetProducerConsumer()">Reset</button>
+          </div>
+
+        </div>
+
+        <!-- LEGEND PANEL -->
+        <div class="panel legend">
+          <h4 class="legend-title">Legend</h4>
+
+          <ul class="legend-list">
+            <li class="legend-item">
+              <span class="legend-shape legend-producing" aria-hidden="true"></span>
+              <span class="legend-label">producing</span>
+            </li>
+
+            <li class="legend-item">
+              <span class="legend-shape legend-consuming" aria-hidden="true"></span>
+              <span class="legend-label">consuming</span>
+            </li>
+
+            <li class="legend-item">
+              <span class="legend-shape legend-waiting" aria-hidden="true"></span>
+              <span class="legend-label">waiting for lock</span>
+            </li>
+
+            <li class="legend-item">
+              <span class="legend-shape legend-holding" aria-hidden="true"></span>
+              <span class="legend-label">holding lock</span>
+            </li>
+
+            <li class="legend-item">
+              <span class="legend-star" aria-hidden="true">★</span>
+              <span class="legend-label">item in buffer (color = producer)</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- CENTER COLUMN: Visualization + STATUS -->
+      <main class="center-column">
+        <div class="pc-layout">
+          <div class="entity-column-wrapper">
+            <h3 class="column-title">Producers</h3>
+            <div id="producers-column" class="entity-column producers-column"></div>
+          </div>
+
+          <div class="buffer-column">
+            <div id="circular-buffer" class="circular-buffer"></div>
+          </div>
+
+          <div class="entity-column-wrapper">
+            <h3 class="column-title">Consumers</h3>
+            <div id="consumers-column" class="entity-column consumers-column"></div>
+          </div>
+        </div>
+
+        <!-- STATUS: stays under visualization -->
+        <div class="panel status">
+          <h4>Status</h4>
+
+          <!-- inner message box: will wrap and scroll internally -->
+          <div id="message-area" class="messages" aria-live="polite"></div>
+        </div>
+
+        <p class="hint">Click Start. Toggle With/Without Synchronization to compare correct behavior vs race conditions.</p>
+      </main>
+
+      <!-- RIGHT COLUMN: Pseudocode and Metrics (shared + producer & consumer) -->
+      <aside class="right-column">
+        <div class="panel pseudocode">
+          <div class="pseudocode-header">
+            <h3>Pseudocode</h3>
+            <div class="pseudocode-mode">
+              <label><input type="radio" name="pcode-mode" value="sync" checked> synchronized</label>
+              <label><input type="radio" name="pcode-mode" value="nosync"> unsynchronized</label>
+            </div>
+          </div>
+
+          <!-- scroll area containing shared data and a two-column producer/consumer row -->
+          <div class="code-scroll">
+            <!-- SHARED DATA: full width -->
+            <pre id="shared-code" class="code-block shared-code"></pre>
+
+            <!-- PRODUCER (left) and CONSUMER (right) below shared data -->
+            <div class="pseudocode-row">
+              <div class="pseudocode-col">
+                <pre id="producer-code" class="code-block producer-code"></pre>
+              </div>
+              <div class="pseudocode-col">
+                <pre id="consumer-code" class="code-block consumer-code"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel metrics">
+          <h4>Metrics</h4>
+          <div>Capacity: <strong id="m-capacity">8</strong></div>
+          <div>Count: <strong id="m-count">0</strong></div>
+          <div>Head: <strong id="m-head">0</strong> • Tail: <strong id="m-tail">0</strong></div>
+          <div>Waiting Producers: <strong id="m-wprods">0</strong> • Waiting Consumers: <strong id="m-wcons">0</strong></div>
+          <div>Mutex Owner: <strong id="m-owner">free</strong></div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
